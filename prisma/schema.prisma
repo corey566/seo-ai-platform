@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Site {
+  id      String @id @default(uuid())
+  name    String
+  domain  String @unique
+  country String @default("global")
+
+  status   String @default("pending")
+  progress Int    @default(0)
+
+  pagesCount Int    @default(0)
+  seoScore   Int    @default(0)
+  language   String @default("en")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  crawlLogs CrawlLog[]
+  pages     Page[]
+  keywords  Keyword[]
+}
+
+model Page {
+  id     String @id @default(uuid())
+  url    String @unique
+  siteId String
+
+  title       String?
+  description String?
+  h1          String?
+  h2          Json?
+  h3          Json?
+  wordCount   Int?
+  content     String?
+
+  keywords      Json?
+  intent        String?
+  seoScore      Int?
+  uxScore       Int?
+  performance   Int?
+  issues        Json?
+  suggestions   Json?
+  lastCrawledAt DateTime?
+  images        Json?
+  sections      Json?
+  links         Json?
+  technical     Json?
+  accessibility Json?
+  indexing      Json?
+  pageSpeed     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site            Site          @relation(fields: [siteId], references: [id])
+  versions        PageVersion[]
+  keywordEntities Keyword[]
+}
+
+model PageVersion {
+  id String @id @default(uuid())
+
+  pageId  String
+  version Int
+
+  url         String
+  title       String?
+  description String?
+  h1          String?
+  h2          Json?
+  h3          Json?
+  wordCount   Int?
+  content     String?
+  issues      Json?
+  suggestions Json?
+
+  keywords      Json?
+  intent        String?
+  seoScore      Int?
+  uxScore       Int?
+  performance   Int?
+  images        Json?
+  sections      Json?
+  links         Json?
+  technical     Json?
+  accessibility Json?
+  indexing      Json?
+  pageSpeed     Json?
+
+  createdAt DateTime @default(now())
+
+  page Page @relation(fields: [pageId], references: [id])
+}
+
+model CrawlLog {
+  id        String   @id @default(uuid())
+  siteId    String
+  level     String   @default("info")
+  message   String
+  url       String?
+  createdAt DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id])
+}
+
+model AppSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Keyword {
+  id String @id @default(uuid())
+
+  keyword    String
+  normalized String
+
+  source String
+
+  intent  String?
+  cluster String?
+
+  country  String @default("global")
+  language String @default("en")
+
+  pageId    String?
+  siteId    String?
+  clusterId String?
+
+  page           Page?           @relation(fields: [pageId], references: [id])
+  site           Site?           @relation(fields: [siteId], references: [id])
+  keywordCluster KeywordCluster? @relation(fields: [clusterId], references: [id])
+
+  priority Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([siteId, country])
+  @@index([pageId])
+  @@index([keyword])
+  @@index([clusterId])
+}
+
+model KeywordCluster {
+  id String @id @default(uuid())
+
+  name   String
+  siteId String
+
+  country  String @default("global")
+  language String @default("en")
+
+  keywords Keyword[]
+
+  createdAt DateTime @default(now())
+
+  @@index([siteId, country])
+}
